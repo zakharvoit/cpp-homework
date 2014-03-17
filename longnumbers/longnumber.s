@@ -132,9 +132,9 @@ add_long:
 		add al, bl
 		xor bl, bl
 
-		cmp al, 10
+		cmp al, radix
 		jl .ok
-		sub al, 10
+		sub al, radix
 		mov bl, 1
 .ok:
 		mov [rdi + rcx], al
@@ -168,7 +168,7 @@ sub_long:
 
 		cmp al, 0
 		jge .ok
-		add al, 10
+		add al, radix
 		mov bl, 1
 .ok:
 		mov [rdi + rcx], al
@@ -295,7 +295,7 @@ power_long_radix:
 		cmp rcx, rbx
 		je .break				
 .loop:
-		mov rbx, 10
+		mov rbx, radix
 		call mul_long_short
 
 		inc rcx
@@ -412,6 +412,4 @@ section .rodata
 
 max_size:			equ 512
 radix:				equ 10
-overflow_msg:		db "Error: subtraction overflow!",0x0a
-overflow_msg_size:	equ $ - overflow_msg
 
