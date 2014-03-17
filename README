@@ -1,1 +1,10 @@
-Solutions for cpp homeworks.
+Long ariphmetics.
+
+Testing:
+
+$ make
+$ ./add <test.txt
+$ ./sub <test.txt
+$ ./mul <test.txt
+
+Also, you can use testing/ scripts for generating tests and testing solutions.
