@@ -8,20 +8,36 @@ global mul_long, add_long, sub_long
 ;;; Create new long number in heap.
 ;;; 	returns rax -- created number
 new_long:
+		push rsi				; malloc can use any register
+		push rdi				; so, we should push all
+		push rbx				; and there are no pusha
+		push rcx				; in x86_64
 		push rdx
-		push rdi
-		push rsi
 		push r8
+		push r9
+		push r10
 		push r11
+		push r12
+		push r13
+		push r14
+		push r15
 
 		mov rdi, max_size
 		call malloc
 
+		pop r15
+		pop r14
+		pop r13
+		pop r12
 		pop r11
+		pop r10
+		pop r9
 		pop r8
-		pop rsi
-		pop rdi
 		pop rdx
+		pop rcx
+		pop rbx
+		pop rdi
+		pop rsi
 		ret
 
 ;;; Fills long number by zeros.
@@ -47,283 +63,269 @@ fill_zeros:
 ;;; Deletes long number.
 ;;; 	rdi -- number to delete
 delete_long:
-		push rdx
-		push rdi
 		push rsi
+		push rax
+		push rbx
+		push rcx
+		push rdx
 		push r8
+		push r9
+		push r10
 		push r11
+		push r12
+		push r13
+		push r14
+		push r15
 
 		call free
 
+		pop r15
+		pop r14
+		pop r13
+		pop r12
 		pop r11
+		pop r10
+		pop r9
 		pop r8
-		pop rsi
-		pop rdi
 		pop rdx
+		pop rcx
+		pop rbx
+		pop rax
+		pop rsi
 		ret
 		
+;;; Returns length of long number.
+;;; 	rsi -- long number
+;;; 	returns rax -- length
+long_length:	
+		lea rax, [rsi + max_size]
+
+.loop:
+		dec rax
+		cmp rax, rsi
+		je .break
+		cmp byte [rax], 0
+		je .loop
+.break:
+		sub rax, rsi
+		inc rax
+
+		ret
+
 ;;; Calculates sum of long numbers.
 ;;; 	rdi -- first long
 ;;; 	rsi -- second long
-;;; 	rdx -- max length of operands
 ;;; 
 ;;; 	returns rdi -- sum of operands
 ;;; 			rdx -- length of sum
 add_long:
-		push r8
-		push rdi
-		push rsi
-		push rax
-		push rbx
-		push rdx
+		push rcx				; index of current digit
+		push rax				; calculation buffer
+		push rbx				; carry flag
 
-		mov r8, rdi
+		xor al, al
 		xor bl, bl
+		xor rcx, rcx
 .loop:
-		mov al, [rsi]
-		add al, [rdi]
+		mov al, [rsi + rcx]
+		add al, [rdi + rcx]
 		add al, bl
 		xor bl, bl
-		cmp al, radix
+
+		cmp al, 10
 		jl .ok
-		;; carry
-		sub al, radix
+		sub al, 10
 		mov bl, 1
 .ok:
-		mov [rdi], al
-		inc rdi
-		inc rsi
-		dec rdx
-		jnz .loop
-
-		test rbx, rbx
-		jz .end
-		mov byte [rdi], 1
-.end:
-		pop rdx
-
-		add rdx, rbx 			; if length of numbers increased
-.shrink_loop:					; if length of number decreased (actually length was less then rdx)
-		cmp rdx, 1
-		je .break
-		cmp byte [r8 + rdx - 1], 0
-		jnz .break
-		dec rdx
-		jmp .shrink_loop
-;;; end .shrink_loop
-.break:
+		mov [rdi + rcx], al
+		
+		inc rcx
+		cmp rcx, max_size
+		jne .loop
 		
 		pop rbx
 		pop rax
-		pop rsi
-		pop rdi
-		pop r8
+		pop rcx
 		ret
 		
 ;;; Subtracts two long numbers.
 ;;; 	rdi -- first long
 ;;; 	rsi -- second long
-;;; 	rdx -- max length of operands
 ;;; 
 ;;; 	returns rdi -- difference of operands
-;;; 			rdx -- length of difference
 sub_long:
-		push rsi
-		push rax
-		push rbx
-		push rdx
-		push rdi
+		push rcx				; index of current digit
+		push rbx				; carry flag
+		push rax				; calculation buffer
 
-		xor bl, bl
+		xor rcx, rcx
+		xor rbx, rbx
 .loop:
-		mov al, [rdi]
-		sub al, [rsi]
+		mov al, [rdi + rcx]
+		sub al, [rsi + rcx]
 		sub al, bl
 		xor bl, bl
+
 		cmp al, 0
 		jge .ok
-		;; carry
-		add al, radix
+		add al, 10
 		mov bl, 1
 .ok:
-		mov [rdi], al
-		inc rdi
-		inc rsi
-		dec rdx
-		jnz .loop
+		mov [rdi + rcx], al
 
-		test bl, bl
-		jz .end
-		;; subtraction overflow
-		mov rdx, overflow_msg_size
-		mov rsi, overflow_msg
-		call putstr
-.end:
-		pop rdi
-		pop rdx
-.shrink_loop:
-		cmp rdx, 1
-		je .break
-		cmp byte [rdi + rdx - 1], 0
-		jnz .break
-		dec rdx
-		jmp .shrink_loop
-.break:
-		pop rbx
+		inc rcx
+		cmp rcx, max_size
+		jne .loop
+		
 		pop rax
-		pop rsi
+		pop rbx
+		pop rcx
 		ret
 
 ;;; Multiplies long number by a short
 ;;; 	rdi -- long number
-;;; 	rdx -- length of number
 ;;; 	rbx -- short number
-;;; 	returns rdx -- length of resulting number
+;;; 
+;;; 	returns rdi -- product of operands
 mul_long_short:
-		push rax
-		push rcx
-		push r8
-		push r9
-		push r10
-		
-		mov r10, radix
-		mov r9, rdx
-		xor r8, r8
-		xor rax, rax
+		push rcx			; index of current digit
+		push rdx			; carry
+		push rax			; calculation buffer
+		push r8				; swap buffer
+
 		xor rcx, rcx
 		xor rdx, rdx
+		xor rax, rax
 .loop:
-		mov rax, rbx
-		mul byte [rdi + rcx] 
-		add rax, r8
+		mov al, [rdi + rcx]
+		mul bl
+		add rax, rdx
 		xor rdx, rdx
-		div r10
+		cmp rax, radix
+		jl .ok
+
+		mov r8, radix
+		div r8
 		mov r8, rax
-		mov [rdi + rcx], dl
-
+		mov rax, rdx
+		mov rdx, r8
+.ok:
+		mov [rdi + rcx], al
 		inc rcx
+		cmp rcx, max_size
+		jne .loop
 
-		test r8, r8
-		jnz .loop
-
-		cmp rcx, r9
-		jl .loop
-;;; end .loop
-
-		mov rdx, rcx
-
-		pop r10
-		pop r9
 		pop r8
-		pop rcx
 		pop rax
+		pop rdx
+		pop rcx
 		ret
-
+		
 ;;; Multiplies two long numbers.
 ;;; 	rdi -- first long
 ;;; 	rsi -- second long
-;;; 	rdx -- max length of operands
 ;;; 
 ;;; 	returns rdi -- product of operands
-;;; 			rdx -- length of product
 mul_long:
+		push rcx				; index of current digit
+		push rax				; used for calling other functions
+		push rbx				; used for calling other functions
 		push r8					; long buffer
-		push r9					; ptr buffer
-		push r10				; length buffer
-		push r11 				; long accumulator
-		push rbx				; short buffer
-		push rcx				; current digit index
-		push rax				; power accumulator
-		push r12				; one another hack
+		push r9					; long accumulator
+		push r10 				; buffer for result
 
-		mov r12, rsi
-		
+		mov r10, rdi
+
 		call new_long
 		mov r8, rax
 
 		call new_long
-		mov r11, rax
-
-		mov r10, rdx
+		mov r9, rax
+		
 		xor rcx, rcx
-		xor rax, rax
-		mov r9, rdi
+		xor rbx, rbx
 .loop:
-		mov rsi, r12
-		mov rdx, max_size
-		;; begin multiplication rsi on rdi[rcx] digit.
 		mov rdi, r8
 		call fill_zeros
 		call add_long
-		mov bl, [r9 + rcx]
+
+		mov bl, [r10 + rcx]
 		call mul_long_short
 
-		mov bl, radix
-		push rcx
-		xor rcx, rcx
-		test rax, rax
-		jz .break_power
-.power:
-		call mul_long_short
-		inc rcx
-		cmp rcx, rax
-		jne .power
-;;; end .power
-.break_power:
-		pop rcx
-		;; end multiplication rsi on rdi[rcx] digit
+		mov rbx, rcx
+		call power_long_radix
 
-		;; add calculated value to r11 accumulator
 		push rsi
-		mov rdi, r11
 		mov rsi, r8
-		mov rdx, max_size		; FIXME: think what is real size
+		mov rdi, r9
 		call add_long
 		pop rsi
 		
-		inc rax
 		inc rcx
-		cmp rcx, r10
+		cmp rcx, max_size
 		jne .loop
-;;; end .loop
-
-		mov rdi, r9
-		call delete_long 		; remove old value
 
 		mov rdi, r8
-		call delete_long		; remove buffer
+		call delete_long
 
-		mov rdi, r11			; now rdi is accumulated value
+		mov rdi, r10
+		call delete_long
 
-		pop r12
-		pop rax
-		pop rcx
-		pop rbx
-		pop r11
+		mov rdi, r9 			; return accumulated value
+		
 		pop r10
 		pop r9
 		pop r8
+		pop rbx
+		pop rax
+		pop rcx
+		ret
+
+;;; Raise long number by power radix * short number
+;;; 	rdi -- long number
+;;;     rbx -- short number
+;;; 
+;;;     result rdi -- result
+power_long_radix:
+		push rcx 				; loop counter
+		push rdx 				; buffer for length
+
+		mov rdx, rbx
+		xor rcx, rcx
+		cmp rcx, rbx
+		je .break				
+.loop:
+		mov rbx, 10
+		call mul_long_short
+
+		inc rcx
+		cmp rcx, rdx
+		jne .loop
+.break:
+
+		pop rbx
+		pop rcx
 		ret
 
 ;;; Writes long number to stdout.
 ;;; 	rsi -- pointer to long number
-;;; 	rdx -- length of long number
 write_long:
+		push rax				; length of buffer
 		push rsi
-		push rdx
 
-		add rsi, rdx			; rsi points to the highest digit
-		dec rsi
+		call long_length
+		add rsi, rax			; now rsi points to end of number
 
+		pop rax
+		push rax				; now rax points to begin of number
 .loop:
-		call write_digit
 		dec rsi
-		dec rdx
-		jnz .loop
-;;; end .loop
+		call write_digit
+		cmp rax, rsi
+		jne .loop
 		
-		pop rdx
-		pop rsi
+		pop rsi 
+		pop rax
 		ret
 
 ;;; Writes digit to stdout.
@@ -408,7 +410,7 @@ reverse:
 
 section .rodata
 
-max_size:			equ 1024
+max_size:			equ 512
 radix:				equ 10
 overflow_msg:		db "Error: subtraction overflow!",0x0a
 overflow_msg_size:	equ $ - overflow_msg
