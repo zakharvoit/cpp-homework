@@ -11,8 +11,11 @@ add: add.o
 sub: sub.o
 mul: mul.o
 
+test: $(EXECUTABLES)
+	cd testing; ./stress.sh
+
 clean:
 	rm -f *.o
-	rm -f *.txt
+	rm -f testing/*.txt
 	rm -f $(EXECUTABLES)
 

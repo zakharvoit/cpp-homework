@@ -1,13 +1,17 @@
 #!/usr/bin/bash
 
+tests=50
 test_mul=true
 test_sub=true
 test_add=true
 test=0
-while [ $test -lt 1000 ]; do
+
+echo "Generating $tests tests"
+
+while [ $test -lt $tests ]; do
 	./gen.py >test.txt
 	if [ $test_mul ]; then
-		./mul <test.txt >result_mul.txt
+		../mul <test.txt >result_mul.txt
 		./mul.py <test.txt >ans_mul.txt
 		echo >>result_mul.txt
 		cmp ans_mul.txt result_mul.txt
@@ -18,7 +22,7 @@ while [ $test -lt 1000 ]; do
 	fi
 
 	if [ $test_sub ]; then
-		./sub <test.txt >result_sub.txt
+		../sub <test.txt >result_sub.txt
 		./sub.py <test.txt >ans_sub.txt
 		echo >>result_sub.txt
 		cmp ans_sub.txt result_sub.txt
@@ -29,7 +33,7 @@ while [ $test -lt 1000 ]; do
 	fi
 
 	if [ $test_add ]; then
-		./add <test.txt >result_add.txt
+		../add <test.txt >result_add.txt
 		./add.py <test.txt >ans_add.txt
 		echo >>result_add.txt
 		cmp ans_add.txt result_add.txt
