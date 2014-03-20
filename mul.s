@@ -10,24 +10,23 @@ main:
 		mov rsi, rax
 		mov rdi, rax
 		call read_long
-		mov rdx, rax
+		mov rbx, rdx
 		call new_long
 		mov rsi, rax
 		call read_long
-		cmp rdx, rax
-		jnl .ok
-		mov rbx, rax
-		mov rax, rdx
-.ok:
-		mov rdx, 1024
+		cmp rbx, rdx
+		jl .less
+		mov rdx, rbx
+.less:
 		call mul_long
-		mov rbx, rsi
+		mov r8, rsi
 		mov rsi, rdi
 		call write_long
+		mov rsi, r8
 
 		call delete_long
-		mov rdi, rbx
-		;; call delete_long
+		mov rdi, rsi
+		call delete_long
 		call exit
 
 ;;; Stop program with 0 return status.

@@ -2,7 +2,7 @@
 
 from random import seed, randrange
 
-MAX_N = 10 ** 100
+MAX_N = 10**2048
 
 a = randrange(MAX_N)
 b = randrange(MAX_N)

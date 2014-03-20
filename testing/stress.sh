@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-tests=50
+tests=1000
 test_mul=true
 test_sub=true
 test_add=true

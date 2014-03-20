@@ -10,15 +10,14 @@ main:
 		mov rsi, rax
 		mov rdi, rax
 		call read_long
-		mov rdx, rax
+		mov rbx, rdx
 		call new_long
 		mov rsi, rax
 		call read_long
-		cmp rdx, rax
-		jnl .ok
-		mov rbx, rax
-		mov rax, rdx
-.ok:
+		cmp rbx, rdx
+		jl .less
+		mov rdx, rbx
+.less:
 		call sub_long
 		mov r8, rsi
 		mov rsi, rdi
