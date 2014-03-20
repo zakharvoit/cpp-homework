@@ -505,6 +505,6 @@ reverse:
 
 section .rodata
 
-max_size:			equ 8128
+max_size:			equ 2048
 radix:				equ 10
 

@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
 from random import seed, randrange
+from sys import argv
 
-MAX_N = 10**2048
+MAX_N = 10**int(argv[1])
 
 a = randrange(MAX_N)
 b = randrange(MAX_N)

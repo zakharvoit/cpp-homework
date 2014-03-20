@@ -1,15 +1,16 @@
 #!/usr/bin/bash
 
+digits=1024
 tests=1000
 test_mul=true
 test_sub=true
 test_add=true
 test=0
 
-echo "Generating $tests tests"
+echo "Generating $tests tests with $digits digits."
 
 while [ $test -lt $tests ]; do
-	./gen.py >test.txt
+	./gen.py $digits >test.txt
 	if [ $test_mul ]; then
 		../mul <test.txt >result_mul.txt
 		./mul.py <test.txt >ans_mul.txt
