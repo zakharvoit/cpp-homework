@@ -7,4 +7,6 @@ $ ./add <test.txt
 $ ./sub <test.txt
 $ ./mul <test.txt
 
-Also, you can use testing/ scripts for generating tests and testing solutions.
+Or with automatically generated tests:
+
+$ make test
